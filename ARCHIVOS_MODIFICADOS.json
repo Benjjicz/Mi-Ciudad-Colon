@@ -1,0 +1,137 @@
+[
+  {
+    "archivo": "CAMBIOS_UNIFICACION.md",
+    "cambio": "nuevo",
+    "sha256": "27d384a8e2838b7a1d72ddb17566751ede07c92a212df890bede15285aefac91"
+  },
+  {
+    "archivo": "scripts/pruebas-integracion.cjs",
+    "cambio": "adaptado",
+    "sha256": "2144ac9b957c5c2eb858b533a853e32c2ad005d8f66428201eb51cd984314168"
+  },
+  {
+    "archivo": "src/app/_layout.tsx",
+    "cambio": "adaptado",
+    "sha256": "603a6449e068da076dead31157811286be91f2525878d2dfb6f4326abf984279"
+  },
+  {
+    "archivo": "src/app/agenda.tsx",
+    "cambio": "adaptado",
+    "sha256": "61ae024630cf06c0ca80f604357adf07fa10a7ef18a342fbf601abcab4f09828"
+  },
+  {
+    "archivo": "src/app/evento/[id].tsx",
+    "cambio": "adaptado",
+    "sha256": "922c890bcb2e3ca2b776ce0ec4ea7df01afa87e4e3b4039b8d94303f8be371ea"
+  },
+  {
+    "archivo": "src/app/index.tsx",
+    "cambio": "adaptado",
+    "sha256": "cb16ad747002f29b2f301e5fc982e1e3cb8ee0dfc28cdf09a699b5ace4a71770"
+  },
+  {
+    "archivo": "src/app/lugar/[id].tsx",
+    "cambio": "adaptado",
+    "sha256": "c964640ddee5764b06c4fc1a071ae1f7bd6e8c1e8634d5e0c539cfa88855615e"
+  },
+  {
+    "archivo": "src/app/registrar-visita/[id].tsx",
+    "cambio": "adaptado",
+    "sha256": "0373d6f2b348ff1e3a2e031f2afda360fddf306fa5dbd83ab412651c42a58dce"
+  },
+  {
+    "archivo": "src/app/registrar-visita/index.tsx",
+    "cambio": "adaptado",
+    "sha256": "349e7cbf9be0163eddf701c6df99df5bc28832d7727c8c81eb6e9c984fc9604c"
+  },
+  {
+    "archivo": "src/componentes/filtroCategorias.tsx",
+    "cambio": "nuevo",
+    "sha256": "2ab3c1f734a4355d6545f504192e6aed17eb535831dcf4bd9ddcb0c0eaa389b2"
+  },
+  {
+    "archivo": "src/componentes/pantallaError.tsx",
+    "cambio": "nuevo",
+    "sha256": "033d38f181c253d6c31ba2ddaa7618b037574eec5245b7f40527eb2255bcf389"
+  },
+  {
+    "archivo": "src/componentes/tarjetaEvento.tsx",
+    "cambio": "nuevo",
+    "sha256": "4275fda490f1dac344eda55faaa62d4832c669ef2e9454233cfeba4e3e56253a"
+  },
+  {
+    "archivo": "src/componentes/tarjetaLugar.tsx",
+    "cambio": "nuevo",
+    "sha256": "d8600c3cb7d29bad85a8c4e2e65e591cdb468a394c137025bbb8f867eb1d1f0a"
+  },
+  {
+    "archivo": "src/components/acciones-lugar.tsx",
+    "cambio": "nuevo",
+    "sha256": "c7639588068336f8e1697572b396b70750b13356636060aee5bce10f480f4343"
+  },
+  {
+    "archivo": "src/hooks/useUbicacion.ts",
+    "cambio": "nuevo",
+    "sha256": "eab00644178cc52b26fdb12843b0e91608beb142ebd0f373984ac9edd9352d68"
+  },
+  {
+    "archivo": "src/servicios/_base.ts",
+    "cambio": "nuevo",
+    "sha256": "0f44e46ca658d21e460b241bc8108a0f96514aa918998a4855745c8dac6444fe"
+  },
+  {
+    "archivo": "src/servicios/categorias.ts",
+    "cambio": "adaptado",
+    "sha256": "c418f883f7954a2f804a170540867587b54e74f7c855d96d3fa24685b3514009"
+  },
+  {
+    "archivo": "src/servicios/eventos-guardados.ts",
+    "cambio": "adaptado",
+    "sha256": "6031f6f1b1104ccb77e41e6109e512a8471003c7ca4d89f0fd10755d7f8ded12"
+  },
+  {
+    "archivo": "src/servicios/eventos.ts",
+    "cambio": "adaptado",
+    "sha256": "c44dd168bc558578aa94fe522e65ca8133c1922dff9e36f8959b3da9b3705e67"
+  },
+  {
+    "archivo": "src/servicios/eventosGuardados.ts",
+    "cambio": "nuevo",
+    "sha256": "14433935b20a200dea61aace937ac35237f30fb796021a7c75b9e0dd58ba572e"
+  },
+  {
+    "archivo": "src/servicios/lugares.ts",
+    "cambio": "adaptado",
+    "sha256": "1564812b85125e5e9d53542bf9a976ddf093d412f4d592bc73dc837b7cc03bd1"
+  },
+  {
+    "archivo": "src/servicios/visitas.ts",
+    "cambio": "adaptado",
+    "sha256": "1c96df583f56c28346f3ab61bf3207d775895dbcbe2e4694f5757302c99a6677"
+  },
+  {
+    "archivo": "src/tipos/index.ts",
+    "cambio": "nuevo",
+    "sha256": "d20fae6974e14dc4ad1d4bd2146dfcb78d646ae6dc8ff51c35b7dce85c600bec"
+  },
+  {
+    "archivo": "src/utils/distancia.ts",
+    "cambio": "nuevo",
+    "sha256": "9ccaecf0e3d83c5a2b8a60455d3c9721b7d23946a1c3758649e12a8fc36de83b"
+  },
+  {
+    "archivo": "src/utils/fechas.ts",
+    "cambio": "nuevo",
+    "sha256": "fc15b9e5f260c11df34cdd92b972210d599d7386ac0a30f5b42177637200c075"
+  },
+  {
+    "archivo": "src/utils/horarios.ts",
+    "cambio": "nuevo",
+    "sha256": "d5a8a7a7bf46c4340dc79b7cad1eda32a3923c5d235f5950cc65650640df55e7"
+  },
+  {
+    "archivo": "src/utils/texto.ts",
+    "cambio": "nuevo",
+    "sha256": "e3811752ac0654645c8bdca01f14e74571277cd00a30260e8c77e419263ffe6a"
+  }
+]
