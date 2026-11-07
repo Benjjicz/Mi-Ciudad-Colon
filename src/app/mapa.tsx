@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { router } from 'expo-router';
 import * as Location from 'expo-location';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,8 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
-import BrujulaLugar from '../components/brujula-lugar';
 import AvisosProximidad from '../components/avisos-proximidad';
+import BrujulaLugar from '../components/brujula-lugar';
 import FiltrosMapa from '../components/filtros-mapa';
 import { obtenerCategorias } from '../servicios/categorias';
 import { obtenerLugares } from '../servicios/lugares';
@@ -47,6 +47,8 @@ export default function MapaScreen() {
   const [ubicacion, setUbicacion] =
     useState<Location.LocationObject | null>(null);
   const [lugarBrujula, setLugarBrujula] = useState<Lugar | null>(null);
+  const [panelMapa, setPanelMapa] = useState<'filtros' | 'avisos' | null>(null);
+  const filtrosAbiertos = panelMapa === 'filtros';
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mapaListo, setMapaListo] = useState(false);
@@ -659,6 +661,8 @@ export default function MapaScreen() {
     );
   }
 
+  const cantidadFiltros = Number(categoriaSeleccionada !== null) +
+    Number(radioMetros !== null) + Number(soloAbiertos) + Number(soloAccesibles);
   const mapaDisponible = mapaListo && error === null;
 
   return (
@@ -670,7 +674,7 @@ export default function MapaScreen() {
             disabled={buscandoUbicacion}
             onPress={mostrarMiUbicacion}
             style={[
-              styles.boton,
+              styles.boton, styles.botonBarra,
               buscandoUbicacion && styles.deshabilitado,
             ]}
           >
@@ -678,7 +682,7 @@ export default function MapaScreen() {
               {buscandoUbicacion
                 ? 'Buscando…'
                 : ubicacion
-                  ? 'Actualizar ubicación'
+                  ? 'Actualizar'
                   : 'Mi ubicación'}
             </Text>
           </Pressable>
@@ -688,7 +692,7 @@ export default function MapaScreen() {
             disabled={!mapaDisponible}
             onPress={mostrarLugares}
             style={[
-              styles.boton,
+              styles.boton, styles.botonBarra,
               !mapaDisponible && styles.deshabilitado,
             ]}
           >
@@ -701,7 +705,7 @@ export default function MapaScreen() {
               disabled={!mapaDisponible}
               onPress={centrarMiUbicacion}
               style={[
-                styles.boton,
+                styles.boton, styles.botonBarra,
                 !mapaDisponible && styles.deshabilitado,
               ]}
             >
@@ -710,32 +714,47 @@ export default function MapaScreen() {
           )}
         </View>
 
-        <FiltrosMapa
-          categorias={categorias}
-          categoriaSeleccionada={categoriaSeleccionada}
-          radioMetros={radioMetros}
-          tieneUbicacion={ubicacion !== null}
-          soloAbiertos={soloAbiertos}
-          soloAccesibles={soloAccesibles}
-          onCategoria={setCategoriaSeleccionada}
-          onRadio={setRadioMetros}
-          onSoloAbiertos={() => {
-            setAhora(new Date());
-            setSoloAbiertos((valor) => !valor);
-          }}
-          onSoloAccesibles={() =>
-            setSoloAccesibles((valor) => !valor)
-          }
-        />
+        <AvisosProximidad lugares={lugares} abierto={panelMapa === 'avisos'} onAlternar={() => setPanelMapa(panelMapa === 'avisos' ? null : 'avisos')} botonFiltro={
+          <Pressable accessibilityRole="button" accessibilityState={{ expanded: filtrosAbiertos }} onPress={() => setPanelMapa(filtrosAbiertos ? null : 'filtros')} style={[styles.boton, styles.botonBarra]}>
+            <Text style={styles.textoBoton}>
+              Filtros{cantidadFiltros > 0 ? ` (${cantidadFiltros})` : ''}
+            </Text>
+          </Pressable>
 
-        <Text style={styles.aviso}>
-          {ubicacion
-            ? 'Distancias en línea recta desde la última ubicación consultada.'
-            : 'Tocá Mi ubicación para habilitar distancias y dirección.'}
-          {' '}Horarios según la hora de Colón.
-        </Text>
+        } />
 
-        <AvisosProximidad lugares={lugares} />
+        {filtrosAbiertos && (
+          <ScrollView style={styles.panelEnLinea} nestedScrollEnabled>
+            <FiltrosMapa
+              categorias={categorias}
+              categoriaSeleccionada={categoriaSeleccionada}
+              radioMetros={radioMetros}
+              tieneUbicacion={ubicacion !== null}
+              soloAbiertos={soloAbiertos}
+              soloAccesibles={soloAccesibles}
+              onCategoria={setCategoriaSeleccionada}
+              onRadio={setRadioMetros}
+              onSoloAbiertos={() => {
+                setAhora(new Date());
+                setSoloAbiertos((valor) => !valor);
+              }}
+              onSoloAccesibles={() =>
+                setSoloAccesibles((valor) => !valor)
+              }
+            />
+
+            <Text style={styles.aviso}>
+              {ubicacion
+                ? 'Distancias en línea recta desde la última ubicación consultada.'
+                : 'Tocá Mi ubicación para habilitar distancias y dirección.'}
+              {' '}Horarios según la hora de Colón.
+            </Text>
+            <Pressable accessibilityRole="button" style={styles.boton} onPress={() => setPanelMapa(null)}>
+              <Text style={styles.textoBoton}>Ver resultados ({lugaresVisibles.length})</Text>
+            </Pressable>
+          </ScrollView>
+        )}
+
 
         {avisoMapa && (
           <Text style={styles.advertencia}>{avisoMapa}</Text>
@@ -914,6 +933,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
   },
+  botonBarra: { flex: 1, minWidth: 0, paddingHorizontal: 4 },
+  panelEnLinea: { maxHeight: 180, marginTop: 8 },
   acciones: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -932,6 +953,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   deshabilitado: { opacity: 0.45 },
   aviso: {
@@ -947,13 +969,13 @@ const styles = StyleSheet.create({
   },
   mapa: { flex: 1, backgroundColor: '#E6EDF3' },
   listaContenedor: {
-    maxHeight: 230,
-    flexShrink: 1,
+    flex: 1,
+    minHeight: 0,
     paddingHorizontal: 18,
     paddingTop: 10,
     backgroundColor: '#FFFFFF',
   },
-  lista: { flexShrink: 1 },
+  lista: { flex: 1 },
   tituloLista: {
     fontSize: 21,
     fontWeight: 'bold',

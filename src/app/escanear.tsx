@@ -1,12 +1,14 @@
-import { useCallback, useRef, useState } from 'react';
-import { router, useFocusEffect } from 'expo-router';
 import {
   CameraView,
   useCameraPermissions,
 } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -25,6 +27,8 @@ import type { Lugar } from '../tipos/lugar';
 
 export default function EscanearScreen() {
   const [permiso, pedirPermiso] = useCameraPermissions();
+  const [permisoFoto, pedirPermisoFoto] = ImagePicker.useCameraPermissions();
+  const [permisoGaleria, pedirPermisoGaleria] = ImagePicker.useMediaLibraryPermissions();
   const bloqueado = useRef(false);
 
   const [enFoco, setEnFoco] = useState(false);
@@ -35,6 +39,7 @@ export default function EscanearScreen() {
   const [lugar, setLugar] = useState<Lugar | null>(null);
   const [codigo, setCodigo] = useState('');
   const [nota, setNota] = useState('');
+  const [fotoUri, setFotoUri] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +63,54 @@ export default function EscanearScreen() {
         'No pudimos abrir los permisos',
         'Revisá el permiso de cámara desde los ajustes de Expo Go.'
       );
+    }
+  }
+
+  async function sacarFoto() {
+    if (!permisoFoto?.granted) {
+      const permisoNuevo = await pedirPermisoFoto();
+      if (!permisoNuevo.granted) {
+        Alert.alert('Permiso denegado', 'Necesitamos acceso a la cámara para tomar una foto.');
+        return;
+      }
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7,
+      });
+
+      if (!result.canceled) {
+        setFotoUri(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'No se pudo abrir la cámara.');
+    }
+  }
+
+  async function elegirDeGaleria() {
+    if (!permisoGaleria?.granted) {
+      const permisoNuevo = await pedirPermisoGaleria();
+      if (!permisoNuevo.granted) {
+        Alert.alert('Permiso denegado', 'Necesitamos acceso a tus fotos para elegir una de la galería.');
+        return;
+      }
+    }
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7,
+      });
+
+      if (!result.canceled) {
+        setFotoUri(result.assets[0].uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'No se pudo abrir la galería.');
     }
   }
 
@@ -88,6 +141,7 @@ export default function EscanearScreen() {
     setLugar(null);
     setCodigo('');
     setNota('');
+    setFotoUri(null);
     setError(null);
     setGuardada(false);
     bloqueado.current = false;
@@ -104,7 +158,7 @@ export default function EscanearScreen() {
     setGuardando(true);
 
     try {
-      await registrarVisitaPorQr(codigo, nota);
+      await registrarVisitaPorQr(codigo, nota, fotoUri);
       setGuardada(true);
     } catch {
       Alert.alert(
@@ -185,6 +239,34 @@ export default function EscanearScreen() {
           <Text style={styles.descripcion}>
             {lugar.descripcionCorta}
           </Text>
+
+          <Text style={styles.label}>Tu foto · opcional</Text>
+          {fotoUri ? (
+            <View style={styles.fotoContainer}>
+              <Image source={{ uri: fotoUri }} style={styles.fotoPrevia} />
+              <Pressable
+                style={styles.botonFotoAccion}
+                onPress={() => setFotoUri(null)}
+              >
+                <Text style={styles.textoSecundario}>Borrar foto</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.botonesFotoContainer}>
+              <Pressable
+                style={styles.botonFotoMitad}
+                onPress={sacarFoto}
+              >
+                <Text style={styles.textoBotonFoto}>Cámara</Text>
+              </Pressable>
+              <Pressable
+                style={styles.botonFotoMitad}
+                onPress={elegirDeGaleria}
+              >
+                <Text style={styles.textoBotonFoto}>Galería</Text>
+              </Pressable>
+            </View>
+          )}
 
           <Text style={styles.label}>Tu nota · opcional</Text>
           <TextInput
@@ -390,5 +472,38 @@ const styles = StyleSheet.create({
   },
   deshabilitado: {
     opacity: 0.6,
+  },
+  botonesFotoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  botonFotoMitad: {
+    flex: 0.48,
+    minHeight: 48,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#E2E8E4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textoBotonFoto: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#14665C',
+  },
+  fotoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  fotoPrevia: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: '#E2E8E4',
+  },
+  botonFotoAccion: {
+    padding: 8,
   },
 });

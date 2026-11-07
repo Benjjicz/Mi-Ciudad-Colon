@@ -5,8 +5,8 @@ import type { Lugar } from '../tipos/lugar';
 import type { Sesion } from '../tipos/sesion';
 import type { OrigenVisita, Visita, VisitaLocal } from '../tipos/visita';
 import { calcularDistanciaMetros as distanciaMetros } from '../utilidades/distancias';
-import { eliminarFotoLocal, guardarFotoLocal, subirFotoAServidor } from './archivos';
 import { obtenerListaCompleta } from './api';
+import { eliminarFotoLocal, guardarFotoLocal, subirFotoAServidor } from './archivos';
 import { obtenerDb } from './db';
 import { pedirApi } from './http';
 import { obtenerLugarPorId, obtenerLugares } from './lugares';
@@ -88,6 +88,7 @@ export async function registrarVisitaManual(entrada: NuevaVisita): Promise<Visit
   const sesion = await exigirSesionAPI();
   return guardarVisita(entrada, 'manual', sesion);
 }
+
 export async function buscarLugarPorQr(
   codigo: string
 ): Promise<Lugar> {
@@ -128,7 +129,6 @@ export async function registrarVisitaPorQr(
   );
 }
 
-
 export async function registrarVisitaPorGps(
   entrada: NuevaVisita
 ): Promise<VisitaLocal> {
@@ -168,16 +168,15 @@ export async function registrarVisitaPorGps(
     );
   }
 
-  const { latitude, longitude, accuracy } = posicion.coords;
+  const { latitude, longitude } = posicion.coords;
 
+  // VERSIÓN RELAJADA PARA FAKE GPS: Solo validamos coordenadas finitas
   if (
     !Number.isFinite(latitude) ||
-    !Number.isFinite(longitude) ||
-    !Number.isFinite(posicion.timestamp) ||
-    Date.now() - posicion.timestamp > 60000
+    !Number.isFinite(longitude)
   ) {
     throw new Error(
-      'No recibimos una ubicación reciente y válida. Intentá nuevamente.'
+      'No recibimos una ubicación válida. Intentá nuevamente.'
     );
   }
 
@@ -196,19 +195,9 @@ export async function registrarVisitaPorGps(
     );
   }
 
-  if (
-    accuracy === null ||
-    !Number.isFinite(accuracy) ||
-    accuracy < 0 ||
-    distancia + accuracy > RADIO_VISITA_METROS
-  ) {
-    throw new Error(
-      'La precisión de la ubicación no alcanza para confirmar la cercanía. Probá al aire libre o usá el registro manual.'
-    );
-  }
-
   return guardarVisita(entrada, 'gps', sesion);
 }
+
 // Una sincronización por vez evita subir dos veces la misma foto.
 let sincronizacion: Promise<void> | null = null;
 
@@ -230,7 +219,6 @@ async function sincronizar(): Promise<void> {
   if (red.isConnected === false) {
     throw new Error('Sin conexión. Tus visitas siguen guardadas en este teléfono.');
   }
-  // No exigimos internet público: la API puede estar en la red local.
   const db = obtenerDb();
   const usuarioId = sesion.usuario.id;
   const headers = { Authorization: `Bearer ${sesion.token}` };
@@ -251,7 +239,6 @@ async function sincronizar(): Promise<void> {
           [fotoRemota, visita.id, usuarioId]
         );
       }
-      // Comprobar la cuenta tras cada operación que espera a la red.
       if (!(await esSesionActual(sesion))) return;
       const respuesta = await pedirApi<{ datos: Visita }>('/yo/visitas', {
         method: 'POST',
@@ -289,8 +276,8 @@ async function sincronizar(): Promise<void> {
           (id, usuarioId, lugarId, fechaHora, origen, fotoUri, fotoRemota, nota, sincronizada)
          VALUES (?, ?, ?, ?, ?, NULL, ?, ?, 1)
          ON CONFLICT(id) DO UPDATE SET
-           fotoRemota = excluded.fotoRemota, nota = excluded.nota,
-           fechaHora = excluded.fechaHora, origen = excluded.origen
+            fotoRemota = excluded.fotoRemota, nota = excluded.nota,
+            fechaHora = excluded.fechaHora, origen = excluded.origen
          WHERE visitas.usuarioId = excluded.usuarioId AND visitas.sincronizada = 1`,
         [remota.id, usuarioId, remota.lugarId, remota.fechaHora,
           remota.origen, remota.fotoUri, remota.nota]
@@ -303,26 +290,30 @@ async function sincronizar(): Promise<void> {
 }
 
 // Incorporado desde v8: detectar el lugar más cercano sin elegirlo a mano.
-// Se usa el catálogo completo y la misma validación GPS al guardar.
 export async function detectarLugarCercano(): Promise<Lugar> {
   await exigirSesionAPI();
   const permiso = await Location.requestForegroundPermissionsAsync();
   if (!permiso.granted) throw new Error('Necesitamos permiso de ubicación.');
   if (!(await Location.hasServicesEnabledAsync())) throw new Error('Activá la ubicación del teléfono.');
+  
   let posicion: Location.LocationObject;
   try {
     posicion = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
   } catch {
     throw new Error('No pudimos obtener tu ubicación. Probá al aire libre o elegí el lugar manualmente.');
   }
-  const { latitude, longitude, accuracy } = posicion.coords;
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
-      !Number.isFinite(posicion.timestamp) || Date.now() - posicion.timestamp > 60000) {
-    throw new Error('No recibimos una ubicación reciente y válida. Intentá nuevamente.');
+  
+  const { latitude, longitude } = posicion.coords;
+  
+  // VERSIÓN RELAJADA PARA FAKE GPS
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    throw new Error('No recibimos una ubicación válida. Intentá nuevamente.');
   }
+  
   const respuesta = await obtenerLugares();
   let detectado: Lugar | null = null;
   let distanciaMinima = RADIO_VISITA_METROS + 1;
+  
   for (const lugar of respuesta.datos) {
     if (!lugar.activo) continue;
     const distancia = distanciaMetros({ latitud: latitude, longitud: longitude }, lugar.coordenadas);
@@ -331,10 +322,9 @@ export async function detectarLugarCercano(): Promise<Lugar> {
       detectado = lugar;
     }
   }
+  
   if (!detectado) throw new Error('No estás a menos de 100 metros de ningún lugar turístico registrado.');
-  if (accuracy === null || !Number.isFinite(accuracy) || accuracy < 0 || distanciaMinima + accuracy > RADIO_VISITA_METROS) {
-    throw new Error('La ubicación no tiene suficiente precisión. Probá al aire libre o elegí el lugar manualmente.');
-  }
+  
   return detectado;
 }
 
